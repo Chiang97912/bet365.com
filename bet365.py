@@ -49,9 +49,9 @@ def dataParse(self, string):
     if len(inPlayDatas) >= 2:
         footballDatas = inPlayDatas[1]
     else:
-        return  # 结束生成器
+        return  # End generator
     if not footballDatas.startswith('CD=1'):
-        return  # 结束生成器
+        return  # End generator
     competitions = footballDatas.split('|CT;')
     if len(competitions) > 0:
         competitions = competitions[1:]
