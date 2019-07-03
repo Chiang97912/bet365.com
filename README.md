@@ -14,7 +14,7 @@ This is a scraper of bet365.com.
 # Installation
 
 ```
-git clone 
+git clone https://github.com/Chiang97912/bet365.com.git
 ```
 
 
