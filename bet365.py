@@ -25,6 +25,7 @@ from txaio import start_logging, use_twisted
 log.startLogging(sys.stdout)
 occurred_eventids = []
 checklist = {}
+language = 'en'  # or cn
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0'
@@ -125,12 +126,22 @@ class MyClientProtocol(WebSocketClientProtocol):
     def onMessage(self, payload, isBinary):
         msg = payload.decode('utf-8')
         if msg.startswith('100'):
-            req = u'\x16\x00CONFIG_10_0,OVInPlay_10_0,Media_L10_Z0,XL_L10_Z0_C1_W3\x01'.encode(
-                'utf-8')
+            if language == 'en':  # English
+                req = u'\x16\x00CONFIG_1_3,OVInPlay_1_3,Media_L1_Z3,XL_L1_Z3_C1_W3\x01'.encode('utf-8')
+            elif language == 'cn':  # Chinese
+                req = u'\x16\x00CONFIG_10_0,OVInPlay_10_0,Media_L10_Z0,XL_L10_Z0_C1_W3\x01'.encode('utf-8')
+            else:
+                req = ''
             # req = '\x16\x00OVM1\x01'
             # print('sending message:', req)
             self.sendMessage(req)
-        if 'OVInPlay_10_0' in msg:
+
+        if language == 'en':  # English
+            msg_header = 'OVInPlay_1_3'
+        elif language == 'cn':  # Chinese
+            msg_header = 'OVInPlay_10_0'
+
+        if msg_header in msg:
             for league, hometeam, awayteam, score, retimeset, eventid in dataParse(self, msg):
                 try:
                     req = yield search(league, hometeam, awayteam, score, retimeset, eventid)
