@@ -119,7 +119,6 @@ def search(league, hometeam, awayteam, score, retimeset, eventid):
 class MyClientProtocol(WebSocketClientProtocol):
     @inlineCallbacks
     def subscribeGames(self, msg):
-        index = 0
         for league, hometeam, awayteam, score, retimeset, eventid in dataParse(self, msg):
             try:
                 req = yield search(league, hometeam, awayteam, score, retimeset, eventid)
@@ -128,9 +127,6 @@ class MyClientProtocol(WebSocketClientProtocol):
                 self.sendClose(1000)
             else:
                 self.sendMessage(req)
-            index += 1
-            if(index >= 10):
-                break
 
     def updateGameData(self, msg):
         for m in msg.split('|\x08'):
