@@ -30,6 +30,8 @@ language = 'en'  # or cn
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0'
 }
+ODATA = {}
+EV = {}
 
 
 def toJson(string):
@@ -111,13 +113,13 @@ def search(league, hometeam, awayteam, score, retimeset, eventid):
     }
     print(league, hometeam, awayteam, score, retimeset, eventid)
     req = u'\x16\x006V{}C18A_1_1\x01'.format(eventid).encode('utf-8')
-    # print('sending message:', req)
     returnValue(req)
 
 
 class MyClientProtocol(WebSocketClientProtocol):
     @inlineCallbacks
     def subscribeGames(self, msg):
+        index = 0
         for league, hometeam, awayteam, score, retimeset, eventid in dataParse(self, msg):
             try:
                 req = yield search(league, hometeam, awayteam, score, retimeset, eventid)
@@ -126,28 +128,58 @@ class MyClientProtocol(WebSocketClientProtocol):
                 self.sendClose(1000)
             else:
                 self.sendMessage(req)
+            index += 1
+            if(index >= 10):
+                break
 
     def updateGameData(self, msg):
         for m in msg.split('|\x08'):
             d = m.split('\x01U|')
-            print(d[0])
-            if len(d) > 1:
-                js = toJson(d[1])
-                print(js)
+            IT = d[0].replace('\x15', '')
+            if len(d) > 1 and IT in ODATA.keys():
+                dic = toJson(d[1])
+                for k in dic.keys():
+                    ODATA[IT][k] = dic[k]
+                print('update ', IT, dic)
 
     def newGameDataParse(self, msg):
         data = msg.split('|')
-        eventid = None
-        ST = []
+        EVC = {}
+        MGC = {}
+        MAC = {}
         for item in data:
+            if item.startswith('EV;'):
+                dic = toJson(item[3:])
+                IT = dic.get('IT')
+                ODATA[IT] = dic
+                EVC = dic
+                EVC["ST"] = []
+                EVC["MG"] = []
+                EV[EVC["FI"]] = EVC
             if item.startswith('ST;'):
                 dic = toJson(item[3:])
-                ST.append(dic)
-
+                EVC["ST"].append(dic)
                 IT = dic.get('IT')
-                if not eventid and IT:
-                    eventid = IT[2:10]
-        print(ST)
+                ODATA[IT] = dic
+            if(item.startswith('MG;')):
+                MGC = toJson(item[3:])
+                EVC["MG"].append(MGC)
+                MGC["MA"] = []
+                IT = dic.get('IT')
+                ODATA[IT] = MGC
+            if(item.startswith('MA;')):
+                MAC = toJson(item[3:])
+                MGC["MA"].append(MAC)
+                MAC["PA"] = []
+                IT = dic.get('IT')
+                ODATA[IT] = MAC
+            if(item.startswith('PA')):
+                dic = toJson(item[3:])
+                MAC["PA"].append(dic)
+                IT = dic.get('IT')
+                ODATA[IT] = dic
+        print(len(EV.keys()))
+        print(len(ODATA.keys()))
 
     def sendMessage(self, message):
         print("Send: ", message)
@@ -171,7 +203,6 @@ class MyClientProtocol(WebSocketClientProtocol):
                     'utf-8')
             else:
                 req = ''
-            # print('sending message:', req)
             self.sendMessage(req)
             req2 = u'\x16\x00OVM5\x01'.encode('utf-8')
             self.sendMessage(req2)
