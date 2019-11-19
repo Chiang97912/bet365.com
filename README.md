@@ -1,6 +1,6 @@
 # BET365
 
-This is a scraper of bet365.com.
+This is a scraper of bet365.com. And now this project supports real-time data on football and basketball. Thanks to [@xbhuang1994](https://github.com/xbhuang1994) for his contribution to parse the basketball data. Everyone is welcome to participate in this project to make this project better.
 
 # Environments
 

@@ -25,7 +25,9 @@ from txaio import start_logging, use_twisted
 log.startLogging(sys.stdout)
 occurred_eventids = []
 checklist = {}
-language = 'en'  # or cn
+language = 'en'  # en or cn
+sport_type = 'football'  # football or basketball
+loop_times = 1
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0'
@@ -49,16 +51,25 @@ def toJson(string):
 
 def dataParse(self, string):
     inPlayDatas = string.split('|CL;')
+    footballDatas = ""
     basketballDatas = ""
     if len(inPlayDatas) >= 2:
         # soccerDatas = inPlayDatas[1]
         for inPlayData in inPlayDatas:
-            if 'ID=18' in inPlayData:
+            if 'ID=1;' in inPlayData and 'CD=1;' in inPlayData:
+                footballDatas = inPlayData
+            elif 'ID=18;' in inPlayData:
                 basketballDatas = inPlayData
-                break
     else:
         return  # End generator
-    competitions = basketballDatas.split('|CT;')
+    if sport_type == 'football':
+        sportDatas = footballDatas
+    elif sport_type == 'basketball':
+        sportDatas = basketballDatas
+    else:
+        sportDatas = ''
+
+    competitions = sportDatas.split('|CT;')
     if len(competitions) > 0:
         competitions = competitions[1:]
     else:
@@ -96,6 +107,14 @@ def dataParse(self, string):
                 hometeam = ''
                 awayteam = ''
             yield league, hometeam, awayteam, score, retimeset, eventid
+    time.sleep(1)
+    if language == 'en':  # English
+        req = u'\x16\x00CONFIG_1_3,OVInPlay_1_3,Media_L1_Z3,XL_L1_Z3_C1_W3\x01'.encode('utf-8')
+    elif language == 'cn':  # Chinese
+        req = u'\x16\x00CONFIG_10_0,OVInPlay_10_0,Media_L10_Z0,XL_L10_Z0_C1_W3\x01'.encode('utf-8')
+    else:
+        req = ''
+    self.sendMessage(req)
 
 
 @inlineCallbacks
@@ -136,7 +155,7 @@ class MyClientProtocol(WebSocketClientProtocol):
                 dic = toJson(d[1])
                 for k in dic.keys():
                     ODATA[IT][k] = dic[k]
-                print('update ', IT, dic)
+                # print('update ', IT, dic)
 
     def newGameDataParse(self, msg):
         data = msg.split('|')
@@ -174,11 +193,11 @@ class MyClientProtocol(WebSocketClientProtocol):
                 MAC["PA"].append(dic)
                 IT = dic.get('IT')
                 ODATA[IT] = dic
-        print(len(EV.keys()))
-        print(len(ODATA.keys()))
+        # print(len(EV.keys()))
+        # print(len(ODATA.keys()))
 
     def sendMessage(self, message):
-        print("Send: ", message)
+        # print("Send: ", message)
         super().sendMessage(message)
 
     def onOpen(self):
@@ -200,16 +219,19 @@ class MyClientProtocol(WebSocketClientProtocol):
             else:
                 req = ''
             self.sendMessage(req)
-            req2 = u'\x16\x00OVM5\x01'.encode('utf-8')
-            self.sendMessage(req2)
+            # req2 = u'\x16\x00OVM5\x01'.encode('utf-8')
+            # self.sendMessage(req2)
 
         if language == 'en':  # English
             msg_header = 'OVInPlay_1_3'
         elif language == 'cn':  # Chinese
             msg_header = 'OVInPlay_10_0'
 
+        global loop_times
         if msg_header in msg:
+            print('The %dth loop' % loop_times)
             yield self.subscribeGames(msg)
+            loop_times += 1
         else:
             matched_id1 = msg.split('F|EV;')[0][-17:-9]
             matched_id2 = msg.split('F|EV;')[0][-16:-8]
@@ -229,7 +251,7 @@ class MyFactory(WebSocketClientFactory, ReconnectingClientFactory):
 
 
 def get_session_id():
-    url = 'https://www.365365868.com/?&cb=10325517107#/IP/'
+    url = 'https://www.288365.com/defaultapi/sports-configuration'
     response = requests.get(url=url, headers=headers)
     session_id = response.cookies['pstk']
     return session_id
