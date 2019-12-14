@@ -15,6 +15,7 @@ This is a scraper of bet365.com. And now this project supports real-time data on
 
 ```
 git clone https://github.com/Chiang97912/bet365.com.git
+pip3 install -r bet365.com/requeriments.txt --user
 ```
 
 
@@ -22,11 +23,11 @@ git clone https://github.com/Chiang97912/bet365.com.git
 # Usage
 
 ```
-python bet365.py
+python3 bet365.py
 ```
 
 
 
 ## Last
 
-enjoy it!
+Enjoy it!

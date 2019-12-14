@@ -1,0 +1,5 @@
+autobahn==18.10.1
+requests==2.19.1
+service-identity==18.1.0
+Twisted==17.5.0
+
