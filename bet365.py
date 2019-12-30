@@ -251,6 +251,10 @@ class MyFactory(WebSocketClientFactory, ReconnectingClientFactory):
 
 
 def get_session_id():
+    headers = {
+        'Cookie': 'rmbs=3; aps03=cf=N&cg=2&cst=0&ct=42&hd=N&lng=10&oty=2&tzi=27; session=processform=0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0'
+    }
     url = 'https://www.288365.com/defaultapi/sports-configuration'
     response = requests.get(url=url, headers=headers)
     session_id = response.cookies['pstk']
