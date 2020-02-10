@@ -27,7 +27,6 @@ occurred_eventids = []
 checklist = {}
 language = 'en'  # en or cn
 sport_type = 'football'  # football or basketball
-loop_times = 1
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0'
@@ -107,7 +106,7 @@ def dataParse(self, string):
                 hometeam = ''
                 awayteam = ''
             yield league, hometeam, awayteam, score, retimeset, eventid
-    time.sleep(1)
+    time.sleep(3)
     if language == 'en':  # English
         req = u'\x16\x00CONFIG_1_3,OVInPlay_1_3,Media_L1_Z3,XL_L1_Z3_C1_W3\x01'.encode('utf-8')
     elif language == 'cn':  # Chinese
@@ -142,6 +141,7 @@ class MyClientProtocol(WebSocketClientProtocol):
             try:
                 req = yield search(league, hometeam, awayteam, score, retimeset, eventid)
             except Exception as e:
+                print('error!')
                 print(e)
                 self.sendClose(1000)
             else:
@@ -201,6 +201,7 @@ class MyClientProtocol(WebSocketClientProtocol):
         super().sendMessage(message)
 
     def onOpen(self):
+        print('On Open')
         req = str('\x23\x03P\x01__time,S_{}\x00'.format(
             self.factory.session_id)).encode('utf-8')
         # print('sending message:', req)
@@ -227,11 +228,8 @@ class MyClientProtocol(WebSocketClientProtocol):
         elif language == 'cn':  # Chinese
             msg_header = 'OVInPlay_10_0'
 
-        global loop_times
         if msg_header in msg:
-            print('The %dth loop' % loop_times)
             yield self.subscribeGames(msg)
-            loop_times += 1
         else:
             matched_id1 = msg.split('F|EV;')[0][-17:-9]
             matched_id2 = msg.split('F|EV;')[0][-16:-8]
@@ -265,12 +263,13 @@ if __name__ == '__main__':
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.81 Safari/537.36"
     url = 'wss://premws-pt3.365lpodds.com/zap/'
 
-    factory = WebSocketClientFactory(
+    factory = MyFactory(
         url, useragent=USER_AGENT, protocols=['zap-protocol-v1'])
     factory.protocol = MyClientProtocol
     factory.headers = {}
 
     factory.session_id = get_session_id()
+    # factory.session_id = '44263EAB3A86367F8DF053097CF36FBB000003'
 
     def accept(response):
         if isinstance(response, PerMessageDeflateResponse):

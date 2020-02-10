@@ -26,7 +26,7 @@ echo "=============================="
 git add *
 git add .gitignore
 git stage *
-git commit -a -m "add language option" >> commit.log
+git commit -am "$(date "+%Y-%m-%d %H:%M:%S")" >> commit.log
 git gc >> git-gc.log
 
 echo "=============================="
